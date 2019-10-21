@@ -1,0 +1,169 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <style>
+    
+        .display-none {
+
+            display: none;
+        }
+
+    </style>
+    
+    <title>OBTENÇÃO DO TOKEN NO PASSAPORTE!</title>
+
+</head>
+
+<body>
+
+    <br />
+
+    <div class="container theme-showcase" role="main">
+
+        <div class="alert alert-primary" role="alert">
+
+            EXEMPLO DE OBTENÇÃO DO TOKEN NO PASSAPORTE
+
+        </div>
+
+        <div class="alert alert-danger display-none" role="alert"></div>
+
+        <form>
+
+            <div class="form-group">
+
+                <button 
+                
+                    id="btn-obter-representacoes" 
+                    
+                    type="button" 
+                    
+                    onclick="obterRepresentacoes()"
+
+                    class="btn btn-primary btn-lg">
+
+                    OBTER REPRESENTAÇÕES
+
+                </button>
+
+            </div>
+
+            <div id="linha-selecao" class="form-group display-none">
+
+                <label for="representacaoSelect">SELECIONAR REPRESENTAÇÃO</label>
+
+                <select class="form-control" onchange="obterToken(this.value)" id="representacaoSelect">
+
+                    <option>SELECIONE UMA REPRESENTAÇÃO</option>
+
+                </select>
+
+            </div>
+
+            <div id="linha-token" class="form-group display-none">
+
+                    <label for="token">TOKEN</label>
+    
+                    <textarea readonly class="form-control" id="token" rows="3"></textarea>
+    
+                </div>
+
+            <div class="form-group">
+
+                <label for="resposta">RESPOSTA PASSAPORTE:</label>
+
+                <textarea readonly class="form-control" id="resposta" rows="20"></textarea>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <script type="text/javascript">
+
+        function exibirAlerta(mensagem) {
+            
+            let alerta = document.querySelector('[class*=alert-danger]')
+
+            alerta.innerHTML = mensagem;
+
+            alerta.classList.remove('display-none');
+        }
+
+        function obterToken(idRepresentacao) {
+
+            let select = document.getElementById('representacaoSelect');
+
+            select.disabled = true;
+
+            $.get(`https://testes.tcm.go.gov.br:8443/passaporte/api/auth/certificado?representacao=${idRepresentacao}`, (data) => {
+
+                document.getElementById('resposta').value = JSON.stringify(data, null, '\t');
+
+                document.getElementById('token').value = data.token.valor;
+
+                document.getElementById('linha-token').classList.remove('display-none')
+            });
+        }
+
+        function obterRepresentacoes() {
+
+            let botao = document.getElementById('btn-obter-representacoes');
+
+            let select = document.getElementById('representacaoSelect');
+
+            botao.disabled = true;
+
+            $.get('https://testes.tcm.go.gov.br:8443/passaporte/api/auth/representacoes', (data) => {
+
+                document.getElementById('resposta').value = JSON.stringify(data, null, '\t');
+
+                if (data.representacoes.length == 0) {
+
+                    exibirAlerta('NENHUMA REPRESENTAÇÃO VINCULADA AO USUÁRIO: ' + data.nome);
+
+                } else {
+
+                    document.getElementById('linha-selecao').classList.remove('display-none');
+
+                    let opcao = null;
+
+                    for (let representacao of data.representacoes) {
+
+                        opcao = document.createElement('option');
+
+                        opcao.value = representacao.codigo;
+
+                        opcao.label = `${representacao.representacao} - ${representacao.unidade}`
+
+                        select.appendChild(opcao)
+                    }   
+                }
+            })
+
+            .fail(() => botao.disabled = false);
+        }
+
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
